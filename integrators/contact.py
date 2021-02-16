@@ -62,6 +62,37 @@ def variational_step_quadratic(system, dt, p, x, s, t):
     return pnew, xnew, snew, tnew
 
 
+def vaariational_quadratic_implicit(init, tspan, a, h):
+    steps = len(tspan)
+    hsq = np.math.pow(h, 2)
+
+    sol = np.empty([steps, 3], dtype=np.float64)
+    sol[0] = np.array(init)
+    for i in range(steps - 1):
+        p, x, z = sol[i]
+
+        def F(pxz):
+            pnew, xnew, znew = pxz
+            return np.array(
+                [
+                    (1 - h * a * z / 2.0) * p
+                    - h / 2.0 * (xnew + x)
+                    - (1 + h * a * znew / 2.0) * pnew,
+                    h * (1 - h * a * z / 2.0) * p + (1.0 - hsq / 2.0) * x - xnew,
+                    z
+                    - znew
+                    + h / 2.0 * ((xnew - x) / h) ** 2
+                    - h / 4.0 * (x ** 2 + xnew ** 2)
+                    - h / 4.0 * a * (z ** 2 + znew ** 2),
+                ]
+            )
+
+        tmp = np.array([p, x, z])
+        pnew, xnew, znew = so.fsolve(F, tmp)
+        sol[i + 1] = np.array([pnew, xnew, znew])
+    return sol
+
+
 def variational_step_linear(system, dt, p, x, s, t):
     # TODO: add snew = s + dt * L
     xnew = x + (dt - 0.5 * dt ** 2 * system.f(t)) * p - 0.5 * dt ** 2 * system.Vq(x, t)
