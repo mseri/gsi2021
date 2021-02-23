@@ -117,22 +117,22 @@ def D(system, dt, p, q, s, t):
 
 def C(system, dt, p, q, s, t):
     q += p * dt
-    s += dt * p ** 2 / 2.0
+    s += dt * np.linalg.norm(p) ** 2 / 2.0
     return p, q, s, t
 
 
 def B(system, dt, p, q, s, t):
-    p += -q * dt
-    s += -dt * q ** 2 / 2.0
+    p += -dt * system.Vq(q,t)
+    s += -dt * system.V(q,t)
     return p, q, s, t
 
 
 def A(system, dt, p, q, s, t):
-    s *= 2.0 / (2.0 + s * dt * system.gamma)
-    p *= 4.0 / (2.0 + s * dt * system.gamma) ** 2
+    s *= 2.0 / (2.0 + s * dt * system.γ)
+    p *= 4.0 / (2.0 + s * dt * system.γ) ** 2
     # To test compositional
-    # p += -dt * system.gamma * p * s
-    # s += -dt * system.gamma * s**2 / 2.0
+    # p += -dt * system.γ * p * s
+    # s += -dt * system.γ * s**2 / 2.0
     return p, q, s, t
 
 
