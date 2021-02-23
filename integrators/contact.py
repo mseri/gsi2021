@@ -225,6 +225,9 @@ def step6b(system, dt, p, q, s, t):
 def step6c(system, dt, p, q, s, t):
     return step6(system, dt, p, q, s, t, a=c_six)
 
+def step6q(system, dt, p, q, s, t):
+    return step6(system, dt, p, q, s, t, stepper=step1q)
+
 
 def discrete_lag4(system, x0, x1, z0, t, dt):
     """returns the discrete Lagrangian and its derivative as a tuple (lag, d(lag)/d(x0), d(lag)/d(x1), d(lag)/d(z0))"""
