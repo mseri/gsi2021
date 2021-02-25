@@ -73,11 +73,25 @@ def variational_implicit_step(system, dt, p, x, z, t):
     (znew,) = fsolve(
         lambda znew:
             z - znew
-            + dt/2 * np.linalg.norm((xnew - x)/dt, ord=2)**2
+            + dt/2 * np.linalg.norm((xnew - x)/dt)**2
             - dt/2 * (system.V(x,t) + system.V(xnew, tnew)
                       + system.F(z,t) + system.F(znew, tnew)),
         [z],
     )
+    pnew = (p * (1 + dt/2 * system.Fz(z, t))
+            - dt/2 * (system.Vq(x,t) + system.Vq(xnew, tnew))
+           )/(1 - dt/2 * system.Fz(znew, tnew))
+    return pnew, xnew, znew, tnew
+
+def variational_step(system, dt, p, x, z, t):
+    """
+    For Lagrangian functions of the form
+    L(j) = 1/(2h^2) (x_{j+1} - x_j)^2 - 1/2 (V(x_j) + V(x_{j+1})) - 1/2 (F(z_j) + F(z_{j+1}))
+    """
+
+    tnew = t + dt
+    xnew = x - dt**2/2 * system.Vq(x, t) + dt * p * (1 + dt/2 * system.Fz(z, t))
+    znew = z + dt/2 * np.linalg.norm((xnew - x)/dt)**2 - dt/2 * (system.V(x,t) + system.V(xnew, tnew) + 2*system.F(z,t))
     pnew = (p * (1 + dt/2 * system.Fz(z, t))
             - dt/2 * (system.Vq(x,t) + system.Vq(xnew, tnew))
            )/(1 - dt/2 * system.Fz(znew, tnew))
@@ -108,7 +122,7 @@ def D(system, dt, p, q, s, t):
 
 def C(system, dt, p, q, s, t):
     q += p * dt
-    s += dt * np.linalg.norm(p, ord=2) ** 2 / 2.0
+    s += dt * np.linalg.norm(p) ** 2 / 2.0
     return p, q, s, t
 
 
@@ -156,7 +170,7 @@ def step1l(system, dt, p, q, s, t):
 
     # dt/2 C
     q += p * dt / 2.0
-    s += np.linalg.norm(p, ord=2) ** 2 * dt / 4.0
+    s += np.linalg.norm(p) ** 2 * dt / 4.0
 
     # dt/2 B
     p -= system.Vq(q, t) * dt / 2
@@ -173,7 +187,7 @@ def step1l(system, dt, p, q, s, t):
 
     # dt/2 C
     q += p * dt / 2
-    s += np.linalg.norm(p, ord=2) ** 2 * dt / 4
+    s += np.linalg.norm(p) ** 2 * dt / 4
 
     # dt/2 D
     t += dt / 2
