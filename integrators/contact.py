@@ -38,6 +38,7 @@ def variational_step_quadratic(system, dt, p, x, s, t):
     - Vq(q,t) -- d/dq V(q,t),
     - f(t) -- the time-dependent damping.
     """
+    tnew = t + dt
     xnew = (
         x + (dt - 0.5 * dt ** 2 * system.f(t) * s) * p - 0.5 * dt ** 2 * system.Vq(x, t)
     )
@@ -49,16 +50,15 @@ def variational_step_quadratic(system, dt, p, x, s, t):
         * dt
         * (
             system.V(x, t)
-            + system.V(xnew, t)
-            + 0.5 * system.f(t) * (s ** 2 + snew ** 2)
+            + system.V(xnew, tnew)
+            + 0.5 * (system.f(t) * s ** 2 + system.f(tnew) * snew ** 2)
         ),
         [s],
     )
     pnew = (
         (1.0 - 0.5 * dt * system.f(t) * s) * p
-        - 0.5 * dt * (system.Vq(x, t) + system.Vq(xnew, t))
-    ) / (1.0 + 0.5 * dt * system.f(t) * snew)
-    tnew = t + dt
+        - 0.5 * dt * (system.Vq(x, t) + system.Vq(xnew, tnew))
+    ) / (1.0 + 0.5 * dt * system.f(tnew) * snew)
     return pnew, xnew, snew, tnew
 
 
@@ -69,30 +69,30 @@ def variational_implicit_step(system, dt, p, x, z, t):
     """
 
     tnew = t + dt
-    xnew = x - dt**2/2 * system.Vq(x, t) + dt * p * (1 - dt/2 * system.Fprime(z, t))
+    xnew = x - dt**2/2 * system.Vq(x, t) + dt * p * (1 + dt/2 * system.Fz(z, t))
     (znew,) = fsolve(
         lambda znew:
-            znew - z 
-            - np.linalg.norm(xnew - x)**2/(2*dt)
-            + dt/2 * (system.V(x,t) + system.V(xnew, tnew))
-            + dt/2 * (system.F(z,t) + system.F(znew, tnew)),
+            z - znew
+            + dt/2 * np.linalg.norm((xnew - x)/dt, ord=2)**2
+            - dt/2 * (system.V(x,t) + system.V(xnew, tnew)
+                      + system.F(z,t) + system.F(znew, tnew)),
         [z],
     )
-    pnew = (p * (1 + dt/2 * system.Fprime(z, t))
+    pnew = (p * (1 + dt/2 * system.Fz(z, t))
             - dt/2 * (system.Vq(x,t) + system.Vq(xnew, tnew))
-           )/(1 - dt/2 * system.Fprime(znew, tnew))
+           )/(1 - dt/2 * system.Fz(znew, tnew))
     return pnew, xnew, znew, tnew
 
 
 def variational_step_linear(system, dt, p, x, s, t):
     # TODO: add snew = s + dt * L
+    tnew = t + dt
     xnew = x + (dt - 0.5 * dt ** 2 * system.f(t)) * p - 0.5 * dt ** 2 * system.Vq(x, t)
     pnew = (1.0 - 0.5 * dt * system.f(t)) / (
         1.0 + 0.5 * dt * system.f(t)
-    ) * p + 0.5 * dt * (-system.Vq(x, t) - system.Vq(xnew, t)) / (
+    ) * p + 0.5 * dt * (-system.Vq(x, t) - system.Vq(xnew, tnew)) / (
         1.0 + 0.5 * dt * system.f(t)
     )
-    tnew = t + dt
     return pnew, xnew, 0, tnew
 
 
@@ -108,7 +108,7 @@ def D(system, dt, p, q, s, t):
 
 def C(system, dt, p, q, s, t):
     q += p * dt
-    s += dt * np.linalg.norm(p) ** 2 / 2.0
+    s += dt * np.linalg.norm(p, ord=2) ** 2 / 2.0
     return p, q, s, t
 
 
@@ -156,7 +156,7 @@ def step1l(system, dt, p, q, s, t):
 
     # dt/2 C
     q += p * dt / 2.0
-    s += np.linalg.norm(p) ** 2 * dt / 4.0
+    s += np.linalg.norm(p, ord=2) ** 2 * dt / 4.0
 
     # dt/2 B
     p -= system.Vq(q, t) * dt / 2
@@ -173,7 +173,7 @@ def step1l(system, dt, p, q, s, t):
 
     # dt/2 C
     q += p * dt / 2
-    s += np.linalg.norm(p) ** 2 * dt / 4
+    s += np.linalg.norm(p, ord=2) ** 2 * dt / 4
 
     # dt/2 D
     t += dt / 2
