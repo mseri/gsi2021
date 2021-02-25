@@ -62,35 +62,26 @@ def variational_step_quadratic(system, dt, p, x, s, t):
     return pnew, xnew, snew, tnew
 
 
-def vaariational_quadratic_implicit(init, tspan, a, h):
-    steps = len(tspan)
-    hsq = np.math.pow(h, 2)
+def variational_implicit_step(system, dt, p, x, z, t):
+    """
+    For Lagrangian functions of the form
+    L(j) = 1/(2h^2) (x_{j+1} - x_j)^2 - 1/2 (V(x_j) + V(x_{j+1})) - 1/2 (F(z_j) + F(z_{j+1}))
+    """
 
-    sol = np.empty([steps, 3], dtype=np.float64)
-    sol[0] = np.array(init)
-    for i in range(steps - 1):
-        p, x, z = sol[i]
-
-        def F(pxz):
-            pnew, xnew, znew = pxz
-            return np.array(
-                [
-                    (1 - h * a * z / 2.0) * p
-                    - h / 2.0 * (xnew + x)
-                    - (1 + h * a * znew / 2.0) * pnew,
-                    h * (1 - h * a * z / 2.0) * p + (1.0 - hsq / 2.0) * x - xnew,
-                    z
-                    - znew
-                    + h / 2.0 * ((xnew - x) / h) ** 2
-                    - h / 4.0 * (x ** 2 + xnew ** 2)
-                    - h / 4.0 * a * (z ** 2 + znew ** 2),
-                ]
-            )
-
-        tmp = np.array([p, x, z])
-        pnew, xnew, znew = so.fsolve(F, tmp)
-        sol[i + 1] = np.array([pnew, xnew, znew])
-    return sol
+    tnew = t + dt
+    xnew = x - dt**2/2 * system.Vq(x, t) + dt * p * (1 - dt/2 * system.Fprime(z, t))
+    (znew,) = fsolve(
+        lambda znew:
+            znew - z 
+            - np.linalg.norm(xnew - x)**2/(2*dt)
+            + dt/2 * (system.V(x,t) + system.V(xnew, tnew))
+            + dt/2 * (system.F(z,t) + system.F(znew, tnew)),
+        [z],
+    )
+    pnew = (p * (1 + dt/2 * system.Fprime(z, t))
+            - dt/2 * (system.Vq(x,t) + system.Vq(xnew, tnew))
+           )/(1 - dt/2 * system.Fprime(znew, tnew))
+    return pnew, xnew, znew, tnew
 
 
 def variational_step_linear(system, dt, p, x, s, t):
@@ -224,6 +215,7 @@ def step6b(system, dt, p, q, s, t):
 
 def step6c(system, dt, p, q, s, t):
     return step6(system, dt, p, q, s, t, a=c_six)
+
 
 def step6q(system, dt, p, q, s, t):
     return step6(system, dt, p, q, s, t, stepper=step1q)
