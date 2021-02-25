@@ -69,19 +69,27 @@ def variational_implicit_step(system, dt, p, x, z, t):
     """
 
     tnew = t + dt
-    xnew = x - dt**2/2 * system.Vq(x, t) + dt * p * (1 + dt/2 * system.Fz(z, t))
+    xnew = x - dt ** 2 / 2 * system.Vq(x, t) + dt * p * (1 + dt / 2 * system.Fz(z, t))
     (znew,) = fsolve(
-        lambda znew:
-            z - znew
-            + dt/2 * np.linalg.norm((xnew - x)/dt)**2
-            - dt/2 * (system.V(x,t) + system.V(xnew, tnew)
-                      + system.F(z,t) + system.F(znew, tnew)),
+        lambda znew: z
+        - znew
+        + dt / 2 * np.linalg.norm((xnew - x) / dt) ** 2
+        - dt
+        / 2
+        * (
+            system.V(x, t)
+            + system.V(xnew, tnew)
+            + system.F(z, t)
+            + system.F(znew, tnew)
+        ),
         [z],
     )
-    pnew = (p * (1 + dt/2 * system.Fz(z, t))
-            - dt/2 * (system.Vq(x,t) + system.Vq(xnew, tnew))
-           )/(1 - dt/2 * system.Fz(znew, tnew))
+    pnew = (
+        p * (1 + dt / 2 * system.Fz(z, t))
+        - dt / 2 * (system.Vq(x, t) + system.Vq(xnew, tnew))
+    ) / (1 - dt / 2 * system.Fz(znew, tnew))
     return pnew, xnew, znew, tnew
+
 
 def variational_step(system, dt, p, x, z, t):
     """
@@ -90,11 +98,16 @@ def variational_step(system, dt, p, x, z, t):
     """
 
     tnew = t + dt
-    xnew = x - dt**2/2 * system.Vq(x, t) + dt * p * (1 + dt/2 * system.Fz(z, t))
-    znew = z + dt/2 * np.linalg.norm((xnew - x)/dt)**2 - dt/2 * (system.V(x,t) + system.V(xnew, tnew) + 2*system.F(z,t))
-    pnew = (p * (1 + dt/2 * system.Fz(z, t))
-            - dt/2 * (system.Vq(x,t) + system.Vq(xnew, tnew))
-           )/(1 - dt/2 * system.Fz(znew, tnew))
+    xnew = x - dt ** 2 / 2 * system.Vq(x, t) + dt * p * (1 + dt / 2 * system.Fz(z, t))
+    znew = (
+        z
+        + dt / 2 * np.linalg.norm((xnew - x) / dt) ** 2
+        - dt / 2 * (system.V(x, t) + system.V(xnew, tnew) + 2 * system.F(z, t))
+    )
+    pnew = (
+        p * (1 + dt / 2 * system.Fz(z, t))
+        - dt / 2 * (system.Vq(x, t) + system.Vq(xnew, tnew))
+    ) / (1 - dt / 2 * system.Fz(znew, tnew))
     return pnew, xnew, znew, tnew
 
 
@@ -127,8 +140,8 @@ def C(system, dt, p, q, s, t):
 
 
 def B(system, dt, p, q, s, t):
-    p += -dt * system.Vq(q,t)
-    s += -dt * system.V(q,t)
+    p += -dt * system.Vq(q, t)
+    s += -dt * system.V(q, t)
     return p, q, s, t
 
 
