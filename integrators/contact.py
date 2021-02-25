@@ -108,7 +108,8 @@ def D(system, dt, p, q, s, t):
 
 def C(system, dt, p, q, s, t):
     q += p * dt
-    s += dt * np.linalg.norm(p, ord=2) ** 2 / 2.0
+    s += dt * np.linalg.norm(p) ** 2 / 2.0
+#     s += dt * np.linalg.norm(p, ord=2) ** 2 / 2.0
     return p, q, s, t
 
 
