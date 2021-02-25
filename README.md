@@ -13,5 +13,5 @@ The available notebooks, containing the code to generate the pictures in the pap
 
 - `The Time-Perturbed Kepler Problem.ipynb`;
 
-- `Quadratic Oscillator.ipynb`
+- `Contact Oscillator.ipynb`
 
