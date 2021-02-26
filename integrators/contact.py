@@ -146,8 +146,16 @@ def B(system, dt, p, q, s, t):
 
 
 def A(system, dt, p, q, s, t):
-    s *= 2.0 / (2.0 + s * dt * system.γ)
-    p *= 4.0 / (2.0 + s * dt * system.γ) ** 2
+    testdt=1000
+    if s<0:
+        testdt=(-2./ (s* system.γ))
+    if dt>testdt:
+        warnings.warn(f"Reached during the step Infinity. Time step: ${dt}$ , singulrity in ${testdt}$")
+        s=float('-inf')
+        p=float('+inf')
+    else:
+        s *= 2.0 / (2.0 + s * dt * system.γ)
+        p *= 4.0 / (2.0 + s * dt * system.γ) ** 2
     # To test compositional
     # p += -dt * system.γ * p * s
     # s += -dt * system.γ * s**2 / 2.0
