@@ -69,13 +69,15 @@ def variational_implicit_step(system, dt, p, x, z, t):
     """
 
     tnew = t + dt
-    xnew = x - dt ** 2 / 2 * system.Vq(x, t) + dt * p * (1 + dt / 2 * system.Fz(z, t))
+    xnew = (
+        x + (dt - 0.5 * dt ** 2 * system.Fz(z, t)) * p - 0.5 * dt ** 2 * system.Vq(x, t)
+    )
     (znew,) = fsolve(
         lambda znew: z
         - znew
-        + dt / 2 * np.linalg.norm((xnew - x) / dt) ** 2
-        - dt
-        / 2
+        + 0.5 * dt * np.linalg.norm((xnew - x) / dt) ** 2
+        - 0.5
+        * dt
         * (
             system.V(x, t)
             + system.V(xnew, tnew)
@@ -85,9 +87,9 @@ def variational_implicit_step(system, dt, p, x, z, t):
         [z],
     )
     pnew = (
-        p * (1 + dt / 2 * system.Fz(z, t))
-        - dt / 2 * (system.Vq(x, t) + system.Vq(xnew, tnew))
-    ) / (1 - dt / 2 * system.Fz(znew, tnew))
+        (1.0 - 0.5 * dt * system.Fz(z, t)) * p
+        - 0.5 * dt * (system.Vq(x, t) + system.Vq(xnew, tnew))
+    ) / (1.0 + 0.5 * dt * system.Fz(znew, tnew))
     return pnew, xnew, znew, tnew
 
 
@@ -98,16 +100,18 @@ def variational_step(system, dt, p, x, z, t):
     """
 
     tnew = t + dt
-    xnew = x - dt ** 2 / 2 * system.Vq(x, t) + dt * p * (1 + dt / 2 * system.Fz(z, t))
+    xnew = (
+        x + (dt - 0.5 * dt ** 2 * system.Fz(z, t)) * p - 0.5 * dt ** 2 * system.Vq(x, t)
+    )
     znew = (
         z
-        + dt / 2 * np.linalg.norm((xnew - x) / dt) ** 2
-        - dt / 2 * (system.V(x, t) + system.V(xnew, tnew) + 2 * system.F(z, t))
+        + 0.5 * dt * np.linalg.norm((xnew - x) / dt) ** 2
+        - 0.5 * dt * (system.V(x, t) + system.V(xnew, tnew) + 2 * system.F(z, t))
     )
     pnew = (
-        p * (1 + dt / 2 * system.Fz(z, t))
-        - dt / 2 * (system.Vq(x, t) + system.Vq(xnew, tnew))
-    ) / (1 - dt / 2 * system.Fz(znew, tnew))
+        (1.0 - 0.5 * dt * system.Fz(z, t)) * p
+        - 0.5 * dt * (system.Vq(x, t) + system.Vq(xnew, tnew))
+    ) / (1.0 + 0.5 * dt * system.Fz(znew, tnew))
     return pnew, xnew, znew, tnew
 
 
@@ -146,13 +150,15 @@ def B(system, dt, p, q, s, t):
 
 
 def A(system, dt, p, q, s, t):
-    testdt=1000
-    if s<0:
-        testdt=(-2./ (s* system.γ))
-    if dt>testdt:
-        warnings.warn(f"Reached during the step Infinity. Time step: ${dt}$ , singulrity in ${testdt}$")
-        s=float('-inf')
-        p=float('+inf')
+    testdt = 1000
+    if s < 0:
+        testdt = -2.0 / (s * system.γ)
+    if dt > testdt:
+        warnings.warn(
+            f"The integration reached a singularity. Time step: ${dt}$ , singulrity in ${testdt}$"
+        )
+        s = float("-inf")
+        p = float("+inf")
     else:
         s *= 2.0 / (2.0 + s * dt * system.γ)
         p *= 4.0 / (2.0 + s * dt * system.γ) ** 2
