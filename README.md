@@ -1,4 +1,7 @@
-# Simulation code for Bravetti, Seri, Zadra: New directions for contact integrators
+# Simulation code for Bravetti, Seri, Zadra: New directions for contact integrators 
+[![DOI](https://zenodo.org/badge/339339299.svg)](https://zenodo.org/badge/latestdoi/339339299)
+
+
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mseri/gsi2020/master)
 
