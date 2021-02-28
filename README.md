@@ -1,4 +1,4 @@
-# Simulation code for Bravetti, Seri, Zadra: A brief panoramic of contact integration
+# Simulation code for Bravetti, Seri, Zadra: New directions for contact integrators
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mseri/gsi2020/master)
 
@@ -14,4 +14,3 @@ The available notebooks, containing the code to generate the pictures in the pap
 - `The Time-Perturbed Kepler Problem.ipynb`;
 
 - `Contact Oscillator.ipynb`
-
